@@ -48,4 +48,22 @@ public class PhotoManager {
         return imageFiles;
     }
 
+
+    public void createSortingFolders() {
+
+        Path keepFolder = folderLocation.resolve("ToKeep");
+        Path deleteFolder = folderLocation.resolve("ToDelete");
+        try {
+
+            Files.createDirectories(keepFolder);
+            Files.createDirectories(deleteFolder);
+
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
 }

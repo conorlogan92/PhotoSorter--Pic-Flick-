@@ -10,6 +10,9 @@ public class Main {
         Path folder = Paths.get("/Users/conorlogan/Desktop/camera pics");
         PhotoManager photoManagerCurrent = new PhotoManager(folder);
         photoManagerCurrent.openFolder();
+        System.out.println(photoManagerCurrent.getImageFiles().size());
+        System.out.println(photoManagerCurrent.getImageFiles().get(0));
+        photoManagerCurrent.createSortingFolders();
 
     }
 }
