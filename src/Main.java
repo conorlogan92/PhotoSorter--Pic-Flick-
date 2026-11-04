@@ -1,8 +1,15 @@
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class Main {
+
+
 
     public static void main(String[] args) {
 
-        System.out.print("Test");
+        Path folder = Paths.get("/Users/conorlogan/Desktop/camera pics");
+        PhotoManager photoManagerCurrent = new PhotoManager(folder);
+        photoManagerCurrent.openFolder();
 
     }
 }

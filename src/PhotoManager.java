@@ -1,16 +1,18 @@
+import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.io.IOException;
+import java.util.ArrayList;
 
 public class PhotoManager {
 
     private Path folderLocation;
-    private DirectoryStream<Path> directoryStream;
+    private ArrayList<Path> imageFiles;
 
 
     public PhotoManager(Path folderLocation){
         this.folderLocation = folderLocation;
+        this.imageFiles = new ArrayList<>();
     }
 
     public boolean isCorrectFormat(Path file) {
@@ -24,19 +26,26 @@ public class PhotoManager {
 
         try{
 
-            directoryStream = Files.newDirectoryStream(folderLocation);
+            DirectoryStream<Path> directoryStream = Files.newDirectoryStream(folderLocation);
+
+            for (Path file: directoryStream){
+
+                if (isCorrectFormat(file)){
+
+                    imageFiles.add(file);
+
+                }
+
+            }
 
         } catch (IOException e){
             System.out.println("something went wrong");
         }
 
-
-
     }
 
-
-
-
-
+    public ArrayList<Path> getImageFiles() {
+        return imageFiles;
+    }
 
 }
