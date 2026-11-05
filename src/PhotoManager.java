@@ -8,6 +8,8 @@ public class PhotoManager {
 
     private Path folderLocation;
     private ArrayList<Path> imageFiles;
+    private Path keepFolder;
+    private Path deleteFolder;
 
 
     public PhotoManager(Path folderLocation){
@@ -51,8 +53,8 @@ public class PhotoManager {
 
     public void createSortingFolders() {
 
-        Path keepFolder = folderLocation.resolve("ToKeep");
-        Path deleteFolder = folderLocation.resolve("ToDelete");
+        keepFolder = folderLocation.resolve("ToKeep");
+        deleteFolder = folderLocation.resolve("ToDelete");
         try {
 
             Files.createDirectories(keepFolder);
@@ -63,6 +65,30 @@ public class PhotoManager {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public void movePhoto(boolean keep) {
+
+        if (imageFiles.isEmpty()) {
+            return;
+        }
+
+        Path currentPhoto = imageFiles.get(0);
+        Path destination;
+
+
+        if (keep) {
+            destination = keepFolder.resolve(currentPhoto.getFileName());
+        } else {
+            destination = deleteFolder.resolve(currentPhoto.getFileName());
+        }
+
+        try {
+            Files.move(currentPhoto, destination);
+            imageFiles.remove(0);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
