@@ -92,4 +92,14 @@ public class PhotoManager {
 
     }
 
+    public Path getCurrentPhoto() {
+
+        if (imageFiles.isEmpty()) {
+            return null;
+        } else {
+            return imageFiles.get(0);
+        }
+
+    }
+
 }
