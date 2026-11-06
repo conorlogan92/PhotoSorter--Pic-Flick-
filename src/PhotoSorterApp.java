@@ -1,4 +1,6 @@
+
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -6,6 +8,8 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -13,187 +17,348 @@ import javafx.stage.Stage;
 import java.io.File;
 import java.nio.file.Path;
 
-    public class PhotoSorterApp extends Application {
+public class PhotoSorterApp extends Application {
 
-        private PhotoManager photoManagerCurrent;
+    private PhotoManager photoManagerCurrent;
 
-        @Override
-        public void start(Stage stage) {
+    @Override
+    public void start(Stage stage) {
 
-            stage.setTitle("PhotoSorter");
+        stage.setTitle("PhotoSorter");
 
+        // Photo display
+        ImageView imageView = new ImageView();
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
 
+        // Custom panel that resizes the image without
+        // allowing the image to control the panel size.
+        StackPane photoPanel = new StackPane() {
 
+            @Override
+            protected void layoutChildren() {
+                super.layoutChildren();
 
+                double availableWidth =
+                        Math.max(1, getWidth() - 40);
 
-            ImageView imageView = new ImageView();
+                double availableHeight =
+                        Math.max(1, getHeight() - 40);
 
-            imageView.setFitWidth(500);
-            imageView.setFitHeight(400);
-            imageView.setPreserveRatio(true);
-            VBox root = new VBox();
-            root.setAlignment(Pos.CENTER);
-            root.setSpacing(15);
-            Label welcomeLabel = new Label("Welcome to PhotoSorter");
-            Label remainingLabel = new Label("Photos remaining: 0");
-            Label statusLabel = new Label("");
+                imageView.setFitWidth(availableWidth);
+                imageView.setFitHeight(availableHeight);
 
-            Button keepButton = new Button("Keep");
-            Button deleteButton = new Button("Delete");
-            Button skipButton = new Button("Skip");
-            Button undoButton = new Button("Undo");
-            HBox buttonRow = new HBox();
-            buttonRow.setAlignment(Pos.CENTER);
-            buttonRow.getChildren().addAll(keepButton, deleteButton, skipButton, undoButton);
-            buttonRow.setSpacing(15);
+                // Centre the image using its actual
+                // displayed dimensions.
+                double imageWidth =
+                        imageView.getBoundsInLocal().getWidth();
 
-            keepButton.setDisable(true);
-            deleteButton.setDisable(true);
-            skipButton.setDisable(true);
-            undoButton.setDisable(true);
+                double imageHeight =
+                        imageView.getBoundsInLocal().getHeight();
 
-            /////////// Choose Button /////////
+                imageView.relocate(
+                        (getWidth() - imageWidth) / 2,
+                        (getHeight() - imageHeight) / 2
+                );
+            }
+        };
 
-            Button chooseFolderButton = new Button("Choose Folder");
-            chooseFolderButton.setOnAction(event -> {
+        photoPanel.getChildren().add(imageView);
 
-                DirectoryChooser directoryChooser = new DirectoryChooser();
-                File selectedFolder = directoryChooser.showDialog(stage);
-                if (selectedFolder == null) {
-                    return;
-                }
+        // Prevent the image from making the panel
+        // grow to the source photo's resolution.
+        imageView.setManaged(false);
 
-                Path folder = selectedFolder.toPath();
-                photoManagerCurrent = new PhotoManager(folder);
-                photoManagerCurrent.openFolder();
-                photoManagerCurrent.createSortingFolders();
-                Path currentPhoto = photoManagerCurrent.getCurrentPhoto();
-                remainingLabel.setText("Photos remaining: " + photoManagerCurrent.getImageFiles().size());
-                if (currentPhoto != null) {
-                    Image image = new Image(currentPhoto.toUri().toString());
-                    imageView.setImage(image);
-                    keepButton.setDisable(false);
-                    deleteButton.setDisable(false);
-                    skipButton.setDisable(false);
-                    statusLabel.setText("");
+        photoPanel.setPrefSize(600, 440);
+        photoPanel.setMinSize(0, 0);
+        photoPanel.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
-                    root.getChildren().setAll(
-                            statusLabel,
-                            remainingLabel,
-                            imageView,
-                            buttonRow
-                    );
+        photoPanel.setStyle(
+                "-fx-background-color: #232A34;" +
+                        "-fx-background-radius: 12;" +
+                        "-fx-padding: 20;"
+        );
 
-                } else {
+        // Main layout
+        VBox root = new VBox();
+        root.setStyle("-fx-background-color: #15191F;");
+        root.setAlignment(Pos.CENTER);
+        root.setSpacing(15);
+        root.setPadding(new Insets(20));
 
-                    imageView.setImage(null);
-                    welcomeLabel.setText("No photos available. Please choose another folder.");
-                    keepButton.setDisable(true);
-                    deleteButton.setDisable(true);
-                    skipButton.setDisable(true);
+        // Allow the photo panel to expand vertically.
+        VBox.setVgrow(photoPanel, Priority.ALWAYS);
 
-                }
+        Label welcomeLabel = new Label("Welcome to PhotoSorter");
+        Label remainingLabel = new Label("Photos remaining: 0");
+        Label statusLabel = new Label("");
 
+        welcomeLabel.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-size: 24px;" +
+                        "-fx-font-weight: bold;"
+        );
 
+        remainingLabel.setStyle(
+                "-fx-text-fill: #DCE5F0;" +
+                        "-fx-font-size: 18px;" +
+                        "-fx-font-weight: bold;"
+        );
 
+        statusLabel.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-size: 18px;"
+        );
 
-            });
+        // Sorting buttons
+        Button keepButton = new Button("Keep");
+        Button deleteButton = new Button("Delete");
+        Button skipButton = new Button("Skip");
+        Button undoButton = new Button("Undo");
 
-            /////////// Keep Button /////////
+        keepButton.setStyle(
+                "-fx-background-color: #246A4D;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-padding: 12 24;"
+        );
 
-            keepButton.setOnAction(event -> {
-                photoManagerCurrent.movePhoto(true);
-                remainingLabel.setText("Photos remaining: " + photoManagerCurrent.getImageFiles().size());
-                undoButton.setDisable(false);
-                Path nextPhoto = photoManagerCurrent.getCurrentPhoto();
+        deleteButton.setStyle(
+                "-fx-background-color: #813A43;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-padding: 12 24;"
+        );
 
-                if (nextPhoto != null) {
-                    Image nextImage = new Image(nextPhoto.toUri().toString());
-                    imageView.setImage(nextImage);
-                } else {
-                    imageView.setImage(null);
-                    statusLabel.setText("All photos sorted!");
-                    keepButton.setDisable(true);
-                    deleteButton.setDisable(true);
-                    skipButton.setDisable(true);
+        skipButton.setStyle(
+                "-fx-background-color: #343D4B;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-padding: 12 24;"
+        );
 
-                }
-            });
+        undoButton.setStyle(
+                "-fx-background-color: #343D4B;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-padding: 12 24;"
+        );
 
-            /////////// Delete Button /////////
+        HBox buttonRow = new HBox();
+        buttonRow.setAlignment(Pos.CENTER);
+        buttonRow.setSpacing(15);
 
-            deleteButton.setOnAction(event -> {
-                photoManagerCurrent.movePhoto(false);
-                remainingLabel.setText("Photos remaining: " + photoManagerCurrent.getImageFiles().size());
-                undoButton.setDisable(false);
-                Path nextPhoto = photoManagerCurrent.getCurrentPhoto();
+        buttonRow.getChildren().addAll(
+                keepButton,
+                deleteButton,
+                skipButton,
+                undoButton
+        );
 
-                if (nextPhoto != null) {
-                    Image nextImage = new Image(nextPhoto.toUri().toString());
-                    imageView.setImage(nextImage);
-                } else {
-                    imageView.setImage(null);
-                    statusLabel.setText("All photos sorted!");
-                    keepButton.setDisable(true);
-                    deleteButton.setDisable(true);
-                    skipButton.setDisable(true);
+        keepButton.setDisable(true);
+        deleteButton.setDisable(true);
+        skipButton.setDisable(true);
+        undoButton.setDisable(true);
 
+        // Choose Folder button
+        Button chooseFolderButton = new Button("Choose Folder");
 
+        chooseFolderButton.setStyle(
+                "-fx-background-color: #3B82F6;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 16px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 8;" +
+                        "-fx-padding: 14 28;" +
+                        "-fx-cursor: hand;"
+        );
 
-                }
-            });
+        chooseFolderButton.setOnAction(event -> {
 
-            /////////// Skip Button /////////
+            DirectoryChooser directoryChooser = new DirectoryChooser();
+            File selectedFolder = directoryChooser.showDialog(stage);
 
-            skipButton.setOnAction(event -> {
-                photoManagerCurrent.skipPhoto();
-                Path nextPhoto = photoManagerCurrent.getCurrentPhoto();
+            if (selectedFolder == null) {
+                return;
+            }
 
-                if (nextPhoto != null){
+            Path folder = selectedFolder.toPath();
 
-                    Image nextImage = new Image(nextPhoto.toUri().toString());
-                    imageView.setImage(nextImage);
+            photoManagerCurrent = new PhotoManager(folder);
+            photoManagerCurrent.openFolder();
+            photoManagerCurrent.createSortingFolders();
 
-                } else {
+            Path currentPhoto = photoManagerCurrent.getCurrentPhoto();
 
-                    skipButton.setDisable(true);
-                }
+            remainingLabel.setText(
+                    "Photos remaining: " +
+                            photoManagerCurrent.getImageFiles().size()
+            );
 
-                    });
+            if (currentPhoto != null) {
 
+                Image image = new Image(currentPhoto.toUri().toString());
+                imageView.setImage(image);
 
-            undoButton.setOnAction(event -> {
-                photoManagerCurrent.undoPhoto();
-                remainingLabel.setText("Photos remaining: " + photoManagerCurrent.getImageFiles().size());
-                Path restoredPhoto = photoManagerCurrent.getCurrentPhoto();
-
-                if (restoredPhoto != null) {
-                    Image restoredImage = new Image(restoredPhoto.toUri().toString());
-                    imageView.setImage(restoredImage);
-                }
                 keepButton.setDisable(false);
                 deleteButton.setDisable(false);
                 skipButton.setDisable(false);
+                undoButton.setDisable(true);
+
                 statusLabel.setText("");
-                undoButton.setDisable(!photoManagerCurrent.canUndo());
-            });
 
+                root.getChildren().setAll(
+                        statusLabel,
+                        remainingLabel,
+                        photoPanel,
+                        buttonRow
+                );
 
+            } else {
 
+                imageView.setImage(null);
 
-            root.getChildren().add(welcomeLabel);
-            root.getChildren().add(chooseFolderButton);
+                welcomeLabel.setText(
+                        "No photos available. Please choose another folder."
+                );
 
+                keepButton.setDisable(true);
+                deleteButton.setDisable(true);
+                skipButton.setDisable(true);
+                undoButton.setDisable(true);
+            }
+        });
 
-            Scene scene = new Scene(root, 800, 600);
-            stage.setScene(scene);
+        // Keep button
+        keepButton.setOnAction(event -> {
 
+            photoManagerCurrent.movePhoto(true);
 
-            stage.show();
+            remainingLabel.setText(
+                    "Photos remaining: " +
+                            photoManagerCurrent.getImageFiles().size()
+            );
 
-        }
+            undoButton.setDisable(!photoManagerCurrent.canUndo());
 
-        public static void main(String[] args) {
-            launch(args);
-        }
+            Path nextPhoto = photoManagerCurrent.getCurrentPhoto();
+
+            if (nextPhoto != null) {
+
+                Image nextImage = new Image(nextPhoto.toUri().toString());
+                imageView.setImage(nextImage);
+
+            } else {
+
+                imageView.setImage(null);
+                statusLabel.setText("All photos sorted!");
+
+                keepButton.setDisable(true);
+                deleteButton.setDisable(true);
+                skipButton.setDisable(true);
+            }
+        });
+
+        // Delete button
+        deleteButton.setOnAction(event -> {
+
+            photoManagerCurrent.movePhoto(false);
+
+            remainingLabel.setText(
+                    "Photos remaining: " +
+                            photoManagerCurrent.getImageFiles().size()
+            );
+
+            undoButton.setDisable(!photoManagerCurrent.canUndo());
+
+            Path nextPhoto = photoManagerCurrent.getCurrentPhoto();
+
+            if (nextPhoto != null) {
+
+                Image nextImage = new Image(nextPhoto.toUri().toString());
+                imageView.setImage(nextImage);
+
+            } else {
+
+                imageView.setImage(null);
+                statusLabel.setText("All photos sorted!");
+
+                keepButton.setDisable(true);
+                deleteButton.setDisable(true);
+                skipButton.setDisable(true);
+            }
+        });
+
+        // Skip button
+        skipButton.setOnAction(event -> {
+
+            photoManagerCurrent.skipPhoto();
+
+            Path nextPhoto = photoManagerCurrent.getCurrentPhoto();
+
+            if (nextPhoto != null) {
+
+                Image nextImage = new Image(nextPhoto.toUri().toString());
+                imageView.setImage(nextImage);
+
+            } else {
+
+                skipButton.setDisable(true);
+            }
+        });
+
+        // Undo button
+        undoButton.setOnAction(event -> {
+
+            photoManagerCurrent.undoPhoto();
+
+            remainingLabel.setText(
+                    "Photos remaining: " +
+                            photoManagerCurrent.getImageFiles().size()
+            );
+
+            Path restoredPhoto = photoManagerCurrent.getCurrentPhoto();
+
+            if (restoredPhoto != null) {
+
+                Image restoredImage =
+                        new Image(restoredPhoto.toUri().toString());
+
+                imageView.setImage(restoredImage);
+            }
+
+            keepButton.setDisable(false);
+            deleteButton.setDisable(false);
+            skipButton.setDisable(false);
+
+            statusLabel.setText("");
+
+            undoButton.setDisable(!photoManagerCurrent.canUndo());
+        });
+
+        // Welcome screen
+        root.getChildren().addAll(
+                welcomeLabel,
+                chooseFolderButton
+        );
+
+        Scene scene = new Scene(root, 800, 600);
+
+        stage.setScene(scene);
+        stage.setMinWidth(450);
+        stage.setMinHeight(350);
+        stage.show();
     }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
