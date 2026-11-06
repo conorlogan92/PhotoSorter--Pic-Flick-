@@ -3,6 +3,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class PhotoManager {
 
@@ -10,12 +11,15 @@ public class PhotoManager {
     private ArrayList<Path> imageFiles;
     private Path keepFolder;
     private Path deleteFolder;
-
+    private Stack<PhotoAction> undoHistory;
 
     public PhotoManager(Path folderLocation){
         this.folderLocation = folderLocation;
         this.imageFiles = new ArrayList<>();
+        this.undoHistory = new Stack<>();
     }
+
+
 
     public boolean isCorrectFormat(Path file) {
         String currentFile = file.getFileName().toString().toLowerCase();
@@ -86,9 +90,23 @@ public class PhotoManager {
         try {
             Files.move(currentPhoto, destination);
             imageFiles.remove(0);
+
+            PhotoAction action = new PhotoAction(currentPhoto, destination, 0);
+            undoHistory.push(action);
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+    }
+
+    public void skipPhoto(){
+
+        if (imageFiles.isEmpty()) {
+            return;
+        }
+        Path currentPhoto = imageFiles.remove(0);
+        imageFiles.add(currentPhoto);
 
     }
 
@@ -100,6 +118,28 @@ public class PhotoManager {
             return imageFiles.get(0);
         }
 
+    }
+
+    public void undoPhoto() {
+
+        if (undoHistory.isEmpty()) {
+            return;
+        }
+
+        PhotoAction action = undoHistory.peek();
+
+        try {
+            Files.move(action.getDestinationPath(), action.getOriginalPath());
+            imageFiles.add(action.getOriginalIndex(), action.getOriginalPath());
+            undoHistory.pop();
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public boolean canUndo() {
+        return !undoHistory.isEmpty();
     }
 
 }
