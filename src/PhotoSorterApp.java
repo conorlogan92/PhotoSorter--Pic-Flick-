@@ -24,7 +24,10 @@ public class PhotoSorterApp extends Application {
     @Override
     public void start(Stage stage) {
 
-        stage.setTitle("PhotoSorter");
+        stage.setTitle("PicFlick");
+        stage.getIcons().add(
+                new Image(getClass().getResourceAsStream("/images/picflick-logo.png"))
+        );
 
         // Photo display
         ImageView imageView = new ImageView();
@@ -88,6 +91,17 @@ public class PhotoSorterApp extends Application {
 
         // Allow the photo panel to expand vertically.
         VBox.setVgrow(photoPanel, Priority.ALWAYS);
+
+        Image logo = new Image(
+                getClass().getResource("/images/picflick-logo.png").toExternalForm()
+        );
+
+        ImageView logoView = new ImageView(logo);
+        logoView.setFitWidth(450);
+        logoView.setPreserveRatio(true);
+        ImageView sortingLogoView = new ImageView(logo);
+        sortingLogoView.setFitWidth(180);
+        sortingLogoView.setPreserveRatio(true);
 
         Label welcomeLabel = new Label("Welcome to PhotoSorter");
         Label remainingLabel = new Label("Photos remaining: 0");
@@ -216,6 +230,7 @@ public class PhotoSorterApp extends Application {
                 statusLabel.setText("");
 
                 root.getChildren().setAll(
+                        sortingLogoView,
                         statusLabel,
                         remainingLabel,
                         photoPanel,
@@ -228,6 +243,12 @@ public class PhotoSorterApp extends Application {
 
                 welcomeLabel.setText(
                         "No photos available. Please choose another folder."
+                );
+
+                root.getChildren().setAll(
+                        logoView,
+                        welcomeLabel,
+                        chooseFolderButton
                 );
 
                 keepButton.setDisable(true);
@@ -344,9 +365,10 @@ public class PhotoSorterApp extends Application {
             undoButton.setDisable(!photoManagerCurrent.canUndo());
         });
 
+
         // Welcome screen
         root.getChildren().addAll(
-                welcomeLabel,
+                logoView,
                 chooseFolderButton
         );
 
