@@ -1,10 +1,9 @@
 import java.nio.file.Path;
 
 public class PhotoAction {
-
-    private Path originalPath;
-    private Path destinationPath;
-    private int originalIndex;
+    private final Path originalPath;
+    private final Path destinationPath;
+    private final int originalIndex;
 
     public PhotoAction(Path originalPath, Path destinationPath, int originalIndex) {
         this.originalPath = originalPath;
@@ -12,16 +11,7 @@ public class PhotoAction {
         this.originalIndex = originalIndex;
     }
 
-    public Path getOriginalPath() {
-        return originalPath;
-    }
-
-    public Path getDestinationPath() {
-        return destinationPath;
-    }
-
-    public int getOriginalIndex() {
-        return originalIndex;
-    }
-
+    public Path getOriginalPath() { return originalPath; }
+    public Path getDestinationPath() { return destinationPath; }
+    public int getOriginalIndex() { return originalIndex; }
 }
