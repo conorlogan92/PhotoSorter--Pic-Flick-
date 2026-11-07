@@ -1,4 +1,8 @@
 PhotoAction.class
 DuplicateScanner$Match.class
+PhotoOrientation.class
+PhotoAction$Type.class
+PicFlickLauncher.class
 PhotoSorterApp$1.class
+PhotoCompareDialog.class
 DuplicateScanner.class

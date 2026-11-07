@@ -97,7 +97,18 @@ public class PhotoManager {
 
     public void skipPhoto() {
         if (imageFiles.isEmpty()) return;
-        imageFiles.add(imageFiles.remove(0));
+        Path skipped = imageFiles.remove(0);
+        imageFiles.add(skipped);
+        undoHistory.push(PhotoAction.skip(skipped));
+    }
+
+    /** Move an already listed shot to the front for comparison-based sorting. */
+    public void prioritizePhoto(Path photo) {
+        int index = imageFiles.indexOf(photo);
+        if (index <= 0) return;
+        imageFiles.remove(index);
+        imageFiles.add(0, photo);
+        undoHistory.push(PhotoAction.reorder(photo, index));
     }
 
     public Path getCurrentPhoto() {
@@ -107,6 +118,24 @@ public class PhotoManager {
     public void undoPhoto() {
         if (undoHistory.isEmpty()) return;
         PhotoAction action = undoHistory.peek();
+        if (action.getType() == PhotoAction.Type.SKIP) {
+            // Move the exact skipped photo back to the front, even if other
+            // operations have changed the queue since it was skipped.
+            if (!imageFiles.remove(action.getOriginalPath())) {
+                throw new IllegalStateException("The skipped photo is no longer in the queue.");
+            }
+            imageFiles.add(0, action.getOriginalPath());
+            undoHistory.pop();
+            return;
+        }
+        if (action.getType() == PhotoAction.Type.REORDER) {
+            if (!imageFiles.remove(action.getOriginalPath())) {
+                throw new IllegalStateException("Photo is no longer available to reorder.");
+            }
+            imageFiles.add(Math.min(action.getOriginalIndex(), imageFiles.size()), action.getOriginalPath());
+            undoHistory.pop();
+            return;
+        }
         try {
             Files.move(action.getDestinationPath(), action.getOriginalPath());
             imageFiles.add(Math.min(action.getOriginalIndex(), imageFiles.size()), action.getOriginalPath());

@@ -25,11 +25,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class PhotoSorterApp extends Application {
     private PhotoManager photoManagerCurrent;
     private DuplicateScanner currentScan;
+    // Rotation is only applied to the preview; original photographs are never changed.
+    private final Map<Path, Integer> previewRotation = new HashMap<>();
 
     @Override
     public void start(Stage stage) {
@@ -47,8 +51,10 @@ public class PhotoSorterApp extends Application {
                 super.layoutChildren();
                 double availableWidth = Math.max(1, getWidth() - 40);
                 double availableHeight = Math.max(1, getHeight() - 40);
-                imageView.setFitWidth(availableWidth);
-                imageView.setFitHeight(availableHeight);
+                // A quarter-turn reverses the available width/height of the image.
+                boolean sideways = ((int) Math.round(imageView.getRotate()) % 180) != 0;
+                imageView.setFitWidth(sideways ? availableHeight : availableWidth);
+                imageView.setFitHeight(sideways ? availableWidth : availableHeight);
                 double imageWidth = imageView.getBoundsInLocal().getWidth();
                 double imageHeight = imageView.getBoundsInLocal().getHeight();
                 imageView.relocate((getWidth() - imageWidth) / 2,
@@ -94,11 +100,17 @@ public class PhotoSorterApp extends Application {
         Button skipButton = new Button("Skip");
         Button undoButton = new Button("Undo");
         Button scanButton = new Button("Find Duplicates");
+        Button rotateLeftButton = new Button("↶ Rotate Left");
+        Button rotateRightButton = new Button("↷ Rotate Right");
+        Button compareButton = new Button("Compare Shots");
         styleButton(keepButton, "#246A4D");
         styleButton(deleteButton, "#813A43");
         styleButton(skipButton, "#343D4B");
         styleButton(undoButton, "#343D4B");
         styleButton(scanButton, "#3B82F6");
+        styleButton(rotateLeftButton, "#343D4B");
+        styleButton(rotateRightButton, "#343D4B");
+        styleButton(compareButton, "#3B82F6");
         keepButton.setDisable(true);
         deleteButton.setDisable(true);
         skipButton.setDisable(true);
@@ -106,6 +118,8 @@ public class PhotoSorterApp extends Application {
 
         HBox buttonRow = new HBox(15, keepButton, deleteButton, skipButton, undoButton);
         buttonRow.setAlignment(Pos.CENTER);
+        HBox toolsRow = new HBox(10, rotateLeftButton, rotateRightButton, compareButton);
+        toolsRow.setAlignment(Pos.CENTER);
         HBox scanRow = new HBox(12, scanButton, scanProgress, scanLabel);
         scanRow.setAlignment(Pos.CENTER);
 
@@ -120,6 +134,12 @@ public class PhotoSorterApp extends Application {
             Path current = photoManagerCurrent.getCurrentPhoto();
             remainingLabel.setText("Photos remaining: " + photoManagerCurrent.getImageFiles().size());
             imageView.setImage(current == null ? null : new Image(current.toUri().toString()));
+            imageView.setRotate(current == null ? 0 : previewRotation.computeIfAbsent(
+                    current, PhotoOrientation::rotationDegrees));
+            photoPanel.requestLayout();
+            rotateLeftButton.setDisable(current == null);
+            rotateRightButton.setDisable(current == null);
+            compareButton.setDisable(current == null);
             keepButton.setDisable(current == null);
             deleteButton.setDisable(current == null);
             skipButton.setDisable(current == null);
@@ -139,7 +159,7 @@ public class PhotoSorterApp extends Application {
                     root.getChildren().setAll(logoView, welcomeLabel, chooseFolderButton);
                 } else {
                     root.getChildren().setAll(sortingLogoView, statusLabel, remainingLabel,
-                            photoPanel, buttonRow, scanRow);
+                            photoPanel, toolsRow, buttonRow, scanRow);
                     refresh.run();
                 }
             } catch (RuntimeException ex) {
@@ -168,6 +188,21 @@ public class PhotoSorterApp extends Application {
                 photoManagerCurrent.undoPhoto();
                 refresh.run();
             } catch (RuntimeException ex) { showError("Undo failed", ex.getMessage()); }
+        });
+
+        rotateLeftButton.setOnAction(event -> rotatePreview(-90, imageView, photoPanel));
+        rotateRightButton.setOnAction(event -> rotatePreview(90, imageView, photoPanel));
+        compareButton.setOnAction(event -> {
+            if (photoManagerCurrent == null) return;
+            PhotoManager manager = photoManagerCurrent;
+            // Neighbouring filenames typically contain consecutive burst shots.
+            List<Path> candidates = manager.getImageFilesSnapshot();
+            PhotoCompareDialog.show(stage, new ArrayList<>(
+                    candidates.subList(0, Math.min(12, candidates.size()))), chosen -> {
+                if (manager != photoManagerCurrent) return;
+                manager.prioritizePhoto(chosen);
+                refresh.run();
+            });
         });
 
         scanButton.setOnAction(event -> {
@@ -211,6 +246,17 @@ public class PhotoSorterApp extends Application {
             if (currentScan != null && currentScan.getState() == Worker.State.RUNNING) currentScan.cancel();
         });
         stage.show();
+    }
+
+    private void rotatePreview(int delta, ImageView imageView, StackPane panel) {
+        if (photoManagerCurrent == null) return;
+        Path current = photoManagerCurrent.getCurrentPhoto();
+        if (current == null) return;
+        int angle = Math.floorMod(previewRotation.computeIfAbsent(
+                current, PhotoOrientation::rotationDegrees) + delta, 360);
+        previewRotation.put(current, angle);
+        imageView.setRotate(angle);
+        panel.requestLayout();
     }
 
     private void reviewDuplicates(List<DuplicateScanner.Match> matches,
