@@ -30,7 +30,7 @@ jobs:
       - name: Build Mac app and DMG
         run: |
           mkdir -p target/installers
-          jpackage --type dmg --name PicFlick --app-version 1.0.0 \
+          jpackage --type dmg --name PicFlick --app-version 1.1.0 \
             --input target/package-input --dest target/installers \
             --main-jar PicFlick.jar --main-class PicFlickLauncher \
             --icon target/icons/PicFlick.icns \
@@ -71,7 +71,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path target/installers | Out-Null
-          jpackage --type exe --name PicFlick --app-version 1.0.0 `
+          jpackage --type exe --name PicFlick --app-version 1.1.0 `
             --input target/package-input --dest target/installers `
             --main-jar PicFlick.jar --main-class PicFlickLauncher `
             --icon target/icons/PicFlick.ico --win-menu --win-shortcut
